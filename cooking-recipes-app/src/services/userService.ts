@@ -1,5 +1,4 @@
-import { User, Gender, UserRole, AccountStatus } from '../models/User';
-import { API_BASE_URL } from './apiConstants';
+import { User, UserRole, AccountStatus } from '../models/User';
 
 export const registerUser = async (userData: Omit<User, 'id' | 'registrationDate' | 'lastModifiedDate' | 'status' | 'role'> & { password: string }): Promise<User> => {
     if (!userData.username || userData.username.length > 15 || !/^\w+$/.test(userData.username)) {
@@ -26,13 +25,15 @@ export const registerUser = async (userData: Omit<User, 'id' | 'registrationDate
     const userToSend = { ...newUser };
 
     try {
-        const response = await fetch(`${API_BASE_URL}/users`, {
+        const response = await fetch(`/api/users`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify(userToSend),
         });
+
+        console.log(response);
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
@@ -53,7 +54,7 @@ export const registerUser = async (userData: Omit<User, 'id' | 'registrationDate
 
 export const loginUser = async (username: string, password: string): Promise<User> => {
     try {
-        const response = await fetch(`${API_BASE_URL}/users?username=${encodeURIComponent(username)}`);
+        const response = await fetch(`/api/users?username=${encodeURIComponent(username)}`);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -88,7 +89,7 @@ export const loginUser = async (username: string, password: string): Promise<Use
 
 export const getUserById = async (userId: string): Promise<User | null> => {
     try {
-        const response = await fetch(`${API_BASE_URL}/users/${encodeURIComponent(userId)}`);
+        const response = await fetch(`/api/users/${encodeURIComponent(userId)}`);
 
         if (response.status === 404) {
             return null;
@@ -101,5 +102,23 @@ export const getUserById = async (userId: string): Promise<User | null> => {
     } catch (error) {
         console.error(`Error fetching user by ID ${userId}:`, error);
         throw error;
+    }
+};
+
+export const getAllUsers = async (): Promise<User[]> => {
+    try {
+        const response = await fetch(`/api/users`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const users: User[] = await response.json();
+        return users.map(user => {
+            const { passwordHash, ...userWithoutHash } = user;
+            return userWithoutHash as User;
+        });
+    } catch (error) {
+        console.error("Error fetching all users:", error);
+        if (error instanceof Error) { throw error; }
+        else { throw new Error('Възникна неочаквана грешка при извличане на потребители.'); }
     }
 };

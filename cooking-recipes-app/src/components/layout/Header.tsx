@@ -35,9 +35,6 @@ const Header: React.FC = () => {
     );
   }
 
-  console.log('Current User:', currentUser); // Debugging line
-  console.log('User Role:', currentUser?.role); // Debugging line
-
   return (
     <header className="bg-gradient-to-r from-green-400 to-blue-500 text-white shadow-md sticky top-0 z-50">
       <nav className="container mx-auto px-4 py-3 flex justify-between items-center">
