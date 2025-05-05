@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { getRecipes, deleteRecipe, RecipeWithAuthor } from '../services/recipeService';
 import { getAllUsers } from '../services/userService';
 import { User, UserRole } from '../models/User';
@@ -75,11 +75,24 @@ const RecipesListPage: React.FC = () => {
         return currentUser.id === recipeAuthorId;
     }, [currentUser]);
 
+    const filteredRecipes = useMemo(() => {
+        let tempRecipes = recipes; 
+
+        if (filterTag.trim() !== '') {
+            const lowerCaseFilterTag = filterTag.toLowerCase().trim();
+            tempRecipes = tempRecipes.filter(recipe =>
+                recipe.tags.some(tag => tag.toLowerCase().includes(lowerCaseFilterTag))
+            );
+        }
+
+        return tempRecipes;
+    }, [recipes, filterTag]);
+
     return (
         <div className="container mx-auto px-4 py-8">
             <h1 className="text-3xl font-bold mb-6 text-gray-800 dark:text-white">Всички Рецепти</h1>
             <RecipeList
-                recipes={recipes}
+                recipes={filteredRecipes}
                 users={users}
                 isLoading={isLoading}
                 error={error}

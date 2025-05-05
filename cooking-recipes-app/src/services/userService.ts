@@ -122,3 +122,66 @@ export const getAllUsers = async (): Promise<User[]> => {
         else { throw new Error('Възникна неочаквана грешка при извличане на потребители.'); }
     }
 };
+
+export const updateUser = async (userId: string, userData: Partial<User>): Promise<User> => {
+    console.log(`[userService] Updating user with ID: ${userId}`, userData);
+
+    const dataToUpdate = { ...userData };
+    delete dataToUpdate.id;
+    delete dataToUpdate.username;
+    delete dataToUpdate.registrationDate;
+    delete dataToUpdate.passwordHash;
+    dataToUpdate.lastModifiedDate = new Date().toISOString();
+
+    try {
+        const response = await fetch(`/api/users/${encodeURIComponent(userId)}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(dataToUpdate),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+        }
+
+        const updatedUser: User = await response.json();
+        console.log("[userService] User updated successfully:", updatedUser);
+        const { passwordHash, ...safeUserData } = updatedUser;
+        return safeUserData as User;
+
+    } catch (error) {
+        console.error(`Error updating user ${userId}:`, error);
+        if (error instanceof Error) {
+            throw error;
+        } else {
+            throw new Error('Възникна неочаквана грешка при обновяване на потребител.');
+        }
+    }
+};
+
+export const deleteUser = async (userId: string): Promise<void> => {
+    console.log(`[userService] Deleting user with ID: ${userId}`);
+    try {
+        const response = await fetch(`/api/users/${encodeURIComponent(userId)}`, {
+            method: 'DELETE',
+        });
+
+        if (!response.ok) {
+            if (response.status === 404) {
+                throw new Error('Потребителят не е намерен или вече е изтрит.');
+            }
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        console.log(`User ${userId} deleted successfully.`);
+    } catch (error) {
+        console.error(`Error deleting user ${userId}:`, error);
+        if (error instanceof Error) {
+            throw error;
+        } else {
+            throw new Error('Възникна неочаквана грешка при изтриване на потребител.');
+        }
+    }
+};
